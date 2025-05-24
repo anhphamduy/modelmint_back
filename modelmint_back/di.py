@@ -1,6 +1,6 @@
+import supabase
 from dependency_injector import containers, providers
 from openai import AsyncOpenAI
-import supabase
 
 from .settings import settings
 
@@ -16,7 +16,7 @@ class Container(containers.DeclarativeContainer):
     )
 
     supabase_client = providers.Singleton(
-        supabase.create_client,
+        supabase.acreate_client,
         settings.supabase_url,
         settings.supabase_key,
     )

@@ -41,6 +41,12 @@ class Settings(BaseSettings):
         env="SUPABASE_KEY",
     )
 
+    database_url: str = Field(
+        ...,
+        description="Database URL for accessing the database",
+        env="DATABASE_URL",
+    )
+
     class Config:
         env_file = ".env"
 

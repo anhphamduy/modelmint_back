@@ -16,6 +16,7 @@ async def generate_synthetic_data(
     data_schema: Dict[str, Any],
     num_samples: int = 10,
     client=Provide[Container.synthetic_data_llm_client],
+    supabase_client=Provide[Container.supabase_client],
 ) -> List[Dict[str, Any]]:
     """
     Generate synthetic data using LLM API based on a provided schema.
@@ -71,7 +72,9 @@ async def generate_synthetic_data(
             functions=[function_schema],
             function_call={"name": "generate_data_sample"},
         )
-        return json.loads(response.choices[0].message.function_call.arguments)
+        data = json.loads(response.choices[0].message.function_call.arguments)
+        await supabase_client.table("synthetic_data").insert(data).execute()
+        return data
 
     samples = await asyncio.gather(
         *[generate_single_sample() for _ in range(num_samples)]
