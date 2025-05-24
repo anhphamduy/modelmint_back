@@ -1,12 +1,23 @@
-from datetime import datetime, UTC
 import uuid
+from datetime import UTC, datetime
+from enum import Enum
 
-from sqlalchemy import Column, DateTime, JSON, ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import JSON, Column, DateTime
+from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
+
+
+class RunStatus(str, Enum):
+    """Enum for synthetic data run status."""
+
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class SyntheticDataRun(Base):
@@ -18,7 +29,9 @@ class SyntheticDataRun(Base):
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     schema = Column(JSONB, nullable=False)  # Store the schema used for generation
     num_samples = Column(JSON, nullable=False)  # Number of samples generated
-    status = Column(JSON, nullable=False)  # e.g., "completed", "failed", "in_progress"
+    status = Column(
+        SQLAlchemyEnum(RunStatus), nullable=False, default=RunStatus.IN_PROGRESS
+    )
     result_url = Column(String, nullable=True)  # URL to access the generated data
 
     # Relationship to synthetic data samples

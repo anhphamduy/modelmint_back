@@ -1,8 +1,8 @@
-"""Add synthetic data
+"""Change type to enum
 
-Revision ID: aac4d3ef4e38
+Revision ID: c8a3d3a24d2e
 Revises: 
-Create Date: 2025-05-24 14:39:34.937059
+Create Date: 2025-05-24 15:17:08.855119
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'aac4d3ef4e38'
+revision: str = 'c8a3d3a24d2e'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('schema', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('num_samples', sa.JSON(), nullable=False),
-    sa.Column('status', sa.JSON(), nullable=False),
+    sa.Column('status', sa.Enum('IN_PROGRESS', 'COMPLETED', 'FAILED', name='runstatus'), nullable=False),
     sa.Column('result_url', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )

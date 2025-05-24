@@ -16,3 +16,8 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "supabase>=2.15.1",
 ]
+
+[dependency-groups]
+dev = [
+    "greenlet>=3.2.2",
+]
