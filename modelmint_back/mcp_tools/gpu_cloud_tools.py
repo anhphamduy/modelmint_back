@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from . import mcp
-from .gpu_cloud_providers import get_provider
-from .settings import settings
+from .. import mcp
+from ..gpu_cloud_providers import get_provider
+from ..settings import settings
 
 
 @mcp.tool()
@@ -93,7 +93,7 @@ def terminate_gpu_instance(provider_name: str, instance_id: str) -> bool:
 
 
 @mcp.tool()
-def list_available_instance_types(provider_name: str) -> List[Dict[str, Any]]:
+def list_available_instance_types(provider_name: str) -> List[Any]:
     """
     List all available GPU instance types for a specific cloud provider.
 
@@ -168,4 +168,4 @@ def delete_ssh_key(provider_name: str, key_id: str) -> bool:
         bool: True if deletion was successful
     """
     provider = get_provider(provider_name, api_key=settings.lambda_labs_api_key)
-    return provider.delete_ssh_key(key_id)
+    return provider.delete_ssh_key(key_id) 

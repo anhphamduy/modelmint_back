@@ -103,8 +103,6 @@ class LambdaLabsProvider(GPUCloudProvider):
         response.raise_for_status()
 
         instance_types = response.json()
-        if not isinstance(instance_types, list):
-            raise ValueError("Expected list of instance types from API")
 
         return instance_types
 

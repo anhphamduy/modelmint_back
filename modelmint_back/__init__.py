@@ -1,7 +1,13 @@
 from mcp.server.fastmcp import FastMCP
 
+from .di import Container
+
+container = Container()
+container.init_resources()
+
 
 mcp = FastMCP("modelmint")
 
-# Import GPU cloud tools to register them with MCP
-from . import gpu_cloud_tools
+container.wire(packages=["modelmint_back.mcp_tools"])
+
+from .mcp_tools import *
