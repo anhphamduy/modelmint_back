@@ -4,13 +4,12 @@ from typing import Any, Dict, List
 
 from dependency_injector.wiring import Provide, inject
 
+from modelmint_back import mcp
+from modelmint_back.core.di import Container
+from modelmint_back.core.settings import settings
 from modelmint_back.models.synthetic_data_models import (RunStatus,
                                                          SyntheticData,
                                                          SyntheticDataRun)
-from modelmint_back.settings import settings
-
-from .. import mcp
-from ..di import Container
 
 
 @mcp.tool()

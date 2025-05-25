@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from modelmint_back.settings import settings
+from modelmint_back.core.settings import settings
 from modelmint_back.models.synthetic_data_models import Base
 
 # this is the Alembic Config object, which provides

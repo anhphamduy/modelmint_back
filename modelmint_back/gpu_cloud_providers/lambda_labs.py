@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from .base import GPUCloudProvider
+from modelmint_back.gpu_cloud_providers.base import GPUCloudProvider
 
 
 class LambdaLabsProvider(GPUCloudProvider):

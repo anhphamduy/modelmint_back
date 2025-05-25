@@ -47,6 +47,25 @@ class Settings(BaseSettings):
         env="DATABASE_URL",
     )
 
+    # Common SSH key configuration for all cloud providers
+    common_ssh_key_name: str = Field(
+        default="modelmint-common-key",
+        description="Common SSH key name to use across all cloud providers",
+        env="COMMON_SSH_KEY_NAME",
+    )
+
+    common_ssh_public_key: str = Field(
+        ...,
+        description="Common SSH public key content to use across all cloud providers",
+        env="COMMON_SSH_PUBLIC_KEY",
+    )
+
+    common_ssh_private_key_path: str = Field(
+        default="~/.ssh/modelmint_key",
+        description="Path to the common SSH private key file",
+        env="COMMON_SSH_PRIVATE_KEY_PATH",
+    )
+
     class Config:
         env_file = ".env"
 

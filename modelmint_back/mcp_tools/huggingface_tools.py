@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from huggingface_hub import list_models, model_info, list_repo_files
-from .. import mcp
-from ..settings import settings
+from huggingface_hub import list_models, list_repo_files, model_info
+
+from modelmint_back import mcp
 
 
 @mcp.tool()

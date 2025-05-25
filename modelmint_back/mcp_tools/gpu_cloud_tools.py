@@ -1,8 +1,9 @@
+import subprocess
 from typing import Any, Dict, List, Optional
 
-from .. import mcp
-from ..gpu_cloud_providers import get_provider
-from ..settings import settings
+from modelmint_back import mcp
+from modelmint_back.core.settings import settings
+from modelmint_back.gpu_cloud_providers import get_provider
 
 
 @mcp.tool()
@@ -42,19 +43,17 @@ def launch_gpu_instance(
     instance_type: str,
     name: Optional[str] = None,
     region_name: Optional[str] = None,
-    ssh_key_names: Optional[List[str]] = None,
     file_system_names: Optional[List[str]] = None,
     hostname: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Launch a new GPU instance on the specified cloud provider.
+    Launch a new GPU instance on the specified cloud provider using the common SSH key.
 
     Args:
         provider_name (str): Name of the cloud provider
         instance_type (str): The type of instance to launch
         name (Optional[str]): Optional name for the instance
         region_name (Optional[str]): AWS region name
-        ssh_key_names (Optional[List[str]]): List of SSH key names to use
         file_system_names (Optional[List[str]]): List of file system names to mount
         hostname (Optional[str]): Hostname for the instance
 
@@ -66,8 +65,8 @@ def launch_gpu_instance(
     config = {}
     if region_name:
         config["region_name"] = region_name
-    if ssh_key_names:
-        config["ssh_key_names"] = ssh_key_names
+    # Always use the common SSH key
+    config["ssh_key_names"] = [settings.common_ssh_key_name]
     if file_system_names:
         config["file_system_names"] = file_system_names
     if hostname:
@@ -124,48 +123,101 @@ def restart_gpu_instance(provider_name: str, instance_id: str) -> Dict[str, Any]
 
 
 @mcp.tool()
-def list_ssh_keys(provider_name: str) -> List[Dict[str, Any]]:
+def setup_machine_basics(
+    provider_name: str,
+    instance_id: str,
+) -> Dict[str, Any]:
     """
-    List all SSH keys associated with the cloud provider account.
+    Set up basic development environment and essential packages on a GPU instance using the common SSH key.
 
     Args:
         provider_name (str): Name of the cloud provider
+        instance_id (str): The unique identifier of the instance
 
     Returns:
-        List[Dict[str, Any]]: List of SSH keys with their details
+        Dict[str, Any]: Setup results and any errors encountered
     """
     provider = get_provider(provider_name, api_key=settings.lambda_labs_api_key)
-    return provider.list_ssh_keys()
 
+    # Get instance details to get SSH connection info
+    instance_details = provider.retrieve_instance_details(instance_id)
 
-@mcp.tool()
-def add_ssh_key(provider_name: str, name: str, public_key: str) -> Dict[str, Any]:
-    """
-    Add a new SSH key to the cloud provider account.
+    if not instance_details or instance_details.get("status") != "running":
+        return {
+            "success": False,
+            "error": "Instance is not running or not found",
+            "instance_status": (
+                instance_details.get("status") if instance_details else "not_found"
+            ),
+        }
 
-    Args:
-        provider_name (str): Name of the cloud provider
-        name (str): Name for the SSH key
-        public_key (str): The public SSH key content
+    # Extract connection details
+    ip_address = instance_details.get("ip")
+    ssh_user = instance_details.get("username", "ubuntu")  # Default to ubuntu
 
-    Returns:
-        Dict[str, Any]: Details of the added SSH key
-    """
-    provider = get_provider(provider_name, api_key=settings.lambda_labs_api_key)
-    return provider.add_ssh_key(name, public_key)
+    if not ip_address:
+        return {"success": False, "error": "Could not retrieve instance IP address"}
 
+    # Basic setup commands
+    setup_commands = [
+        "sudo apt-get update -y",
+        "sudo apt-get upgrade -y",
+        "sudo apt-get install -y curl wget git vim htop tree unzip build-essential",
+    ]
 
-@mcp.tool()
-def delete_ssh_key(provider_name: str, key_id: str) -> bool:
-    """
-    Delete an SSH key from the cloud provider account.
+    setup_results = {
+        "success": True,
+        "instance_id": instance_id,
+        "ip_address": ip_address,
+        "ssh_key_name": settings.common_ssh_key_name,
+        "completed_steps": [],
+        "failed_steps": [],
+    }
 
-    Args:
-        provider_name (str): Name of the cloud provider
-        key_id (str): The unique identifier of the SSH key
+    # Execute setup commands via SSH
+    for i, command in enumerate(setup_commands):
+        try:
+            ssh_command = [
+                "ssh",
+                "-i",
+                settings.common_ssh_private_key_path,
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-o",
+                "UserKnownHostsFile=/dev/null",
+                "-o",
+                "ConnectTimeout=30",
+                f"{ssh_user}@{ip_address}",
+                command,
+            ]
 
-    Returns:
-        bool: True if deletion was successful
-    """
-    provider = get_provider(provider_name, api_key=settings.lambda_labs_api_key)
-    return provider.delete_ssh_key(key_id) 
+            result = subprocess.run(
+                ssh_command, capture_output=True, text=True, timeout=300
+            )
+
+            if result.returncode == 0:
+                setup_results["completed_steps"].append(
+                    {"step": i + 1, "command": command, "status": "success"}
+                )
+            else:
+                setup_results["failed_steps"].append(
+                    {
+                        "step": i + 1,
+                        "command": command,
+                        "status": "failed",
+                        "error": result.stderr.strip(),
+                    }
+                )
+
+        except Exception as e:
+            setup_results["failed_steps"].append(
+                {"step": i + 1, "command": command, "status": "error", "error": str(e)}
+            )
+
+    # Final status
+    setup_results["success"] = len(setup_results["failed_steps"]) == 0
+    setup_results["message"] = (
+        f"Setup completed. {len(setup_results['completed_steps'])} successful, {len(setup_results['failed_steps'])} failed."
+    )
+
+    return setup_results

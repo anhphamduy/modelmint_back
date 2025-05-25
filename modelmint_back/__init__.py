@@ -1,10 +1,11 @@
 from mcp.server.fastmcp import FastMCP
 
-from .di import Container
+from modelmint_back.core import Container, initialize_server
 
 container = Container()
 container.init_resources()
 
+initialize_server()
 
 mcp = FastMCP("modelmint")
 
