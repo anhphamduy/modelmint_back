@@ -1,13 +1,13 @@
 import asyncio
 import json
 from typing import Any, Dict, List
-from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from modelmint_back.models.synthetic_data_models import (RunStatus,
+                                                         SyntheticData,
+                                                         SyntheticDataRun)
 from modelmint_back.settings import settings
-from modelmint_back.models.synthetic_data_models import SyntheticDataRun, SyntheticData, RunStatus
 
 from .. import mcp
 from ..di import Container
@@ -52,9 +52,7 @@ async def generate_synthetic_data(
     """
     # Create a new synthetic data run
     run = SyntheticDataRun(
-        schema=data_schema,
-        num_samples=num_samples,
-        status=RunStatus.IN_PROGRESS
+        schema=data_schema, num_samples=num_samples, status=RunStatus.IN_PROGRESS
     )
     db_session.add(run)
     await db_session.flush()
@@ -102,7 +100,6 @@ async def generate_synthetic_data(
 
         return samples
     except Exception as e:
-        # Update run status to failed
         run.status = RunStatus.FAILED
         await db_session.commit()
         raise e
