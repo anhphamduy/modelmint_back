@@ -15,6 +15,12 @@ from .huggingface_tools import (
     list_model_files,
 )
 
+from .training_model_tools import (
+    train_model_with_llamafactory,
+    check_training_status,
+    stop_training,
+)
+
 __all__ = [
     "list_gpu_instances",
     "get_instance_details",
@@ -26,4 +32,7 @@ __all__ = [
     "search_models",
     "get_model_details",
     "list_model_files",
+    "train_model_with_llamafactory",
+    "check_training_status",
+    "stop_training",
 ]
